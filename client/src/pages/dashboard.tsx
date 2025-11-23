@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import type { Comparison } from "@shared/schema";
-import { Files, Plus, Search, LogOut, Eye, Share2, Trash2, Calendar } from "lucide-react";
+import { Files, Plus, Search, LogOut, Eye, Share2, Trash2, Calendar, BarChart3 } from "lucide-react";
 import { Link } from "wouter";
 import { format } from "date-fns";
 
@@ -109,12 +109,20 @@ export default function Dashboard() {
               <h2 className="text-3xl font-bold mb-2">Dashboard</h2>
               <p className="text-muted-foreground">Manage your setup comparisons</p>
             </div>
-            <Button asChild data-testid="button-new-comparison">
-              <Link href="/compare">
-                <Plus className="h-4 w-4 mr-2" />
-                New Comparison
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline" data-testid="button-analytics">
+                <Link href="/analytics">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Analytics
+                </Link>
+              </Button>
+              <Button asChild data-testid="button-new-comparison">
+                <Link href="/compare">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Comparison
+                </Link>
+              </Button>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 mb-8">

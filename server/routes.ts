@@ -96,6 +96,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Analytics endpoint
+  app.get('/api/analytics', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const userComparisons = await storage.getUserComparisons(userId);
+      
+      // Sort comparisons by date (newest first), filtering out invalid dates
+      const sortedComparisons = [...userComparisons]
+        .filter(comp => comp.createdAt) // Only include comparisons with valid dates
+        .sort((a, b) => {
+          const dateA = new Date(a.createdAt!).getTime();
+          const dateB = new Date(b.createdAt!).getTime();
+          return dateB - dateA;
+        });
+      
+      // Calculate analytics
+      const analytics = {
+        totalComparisons: sortedComparisons.length,
+        recentComparisons: sortedComparisons.slice(0, 5),
+        parameterFrequency: {} as Record<string, number>,
+        parameterChangeCounts: {} as Record<string, { count: number, magnitudeSum: number }>,
+        carDistribution: {} as Record<string, number>,
+        trackDistribution: {} as Record<string, number>,
+        temporalData: [] as any[],
+        setupNamesUsed: new Set<string>(),
+      };
+      
+      // Analyze each comparison
+      sortedComparisons.forEach((comp) => {
+        // Track car and track distribution (normalized)
+        if (comp.carName) {
+          const normalizedCar = comp.carName.trim().toLowerCase();
+          analytics.carDistribution[normalizedCar] = (analytics.carDistribution[normalizedCar] || 0) + 1;
+        }
+        if (comp.trackName) {
+          const normalizedTrack = comp.trackName.trim().toLowerCase();
+          analytics.trackDistribution[normalizedTrack] = (analytics.trackDistribution[normalizedTrack] || 0) + 1;
+        }
+        
+        // Track setup names
+        analytics.setupNamesUsed.add(comp.setupAName);
+        analytics.setupNamesUsed.add(comp.setupBName);
+        
+        // Analyze delta data
+        const deltas = comp.deltaData as any;
+        if (deltas && typeof deltas === 'object') {
+          Object.entries(deltas).forEach(([category, params]) => {
+            if (typeof params === 'object' && params !== null) {
+              Object.entries(params as any).forEach(([param, values]) => {
+                const fullParam = `${category}.${param}`;
+                
+                // Track parameter change frequency (include all changes, not just numeric)
+                const hasChange = (values as any)?.oldValue !== (values as any)?.newValue;
+                if (hasChange) {
+                  analytics.parameterFrequency[fullParam] = (analytics.parameterFrequency[fullParam] || 0) + 1;
+                  
+                  // Track numeric deltas for average magnitude calculation
+                  const delta = (values as any).delta;
+                  if (typeof delta === 'number' && !isNaN(delta) && delta !== 0) {
+                    if (!analytics.parameterChangeCounts[fullParam]) {
+                      analytics.parameterChangeCounts[fullParam] = { count: 0, magnitudeSum: 0 };
+                    }
+                    analytics.parameterChangeCounts[fullParam].count++;
+                    analytics.parameterChangeCounts[fullParam].magnitudeSum += Math.abs(delta);
+                  }
+                }
+              });
+            }
+          });
+        }
+        
+        // Add temporal data point with formatted car/track names
+        analytics.temporalData.push({
+          date: comp.createdAt,
+          id: comp.id,
+          car: comp.carName ? comp.carName.trim() : 'Unknown',
+          track: comp.trackName ? comp.trackName.trim() : 'Unknown',
+          setupA: comp.setupAName,
+          setupB: comp.setupBName,
+        });
+      });
+      
+      // Sort parameter frequency and get top 10
+      const topParameters = Object.entries(analytics.parameterFrequency)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 10)
+        .map(([param, count]) => {
+          const changeData = analytics.parameterChangeCounts[param];
+          // Only calculate average if we have numeric changes
+          const avgMagnitude = changeData && changeData.count > 0 
+            ? changeData.magnitudeSum / changeData.count 
+            : null; // Use null for non-numeric changes
+          return {
+            parameter: param,
+            count,
+            avgMagnitude,
+            hasNumericData: changeData && changeData.count > 0,
+          };
+        });
+      
+      // Format car distribution (capitalize first letter for display)
+      const formattedCarDistribution: Record<string, number> = {};
+      Object.entries(analytics.carDistribution).forEach(([car, count]) => {
+        const displayName = car.charAt(0).toUpperCase() + car.slice(1);
+        formattedCarDistribution[displayName] = count;
+      });
+      
+      // Format track distribution 
+      const formattedTrackDistribution: Record<string, number> = {};
+      Object.entries(analytics.trackDistribution).forEach(([track, count]) => {
+        const displayName = track.split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+        formattedTrackDistribution[displayName] = count;
+      });
+      
+      // Sort temporal data chronologically (oldest first for timeline)
+      const sortedTemporalData = [...analytics.temporalData].sort((a, b) => {
+        const dateA = new Date(a.date || 0).getTime();
+        const dateB = new Date(b.date || 0).getTime();
+        return dateA - dateB; // Ascending order for timeline
+      });
+      
+      // Format recent comparisons with normalized names
+      const formattedRecentComparisons = analytics.recentComparisons.map(comp => ({
+        ...comp,
+        carName: comp.carName ? comp.carName.trim() : null,
+        trackName: comp.trackName ? comp.trackName.trim() : null,
+      }));
+      
+      res.json({
+        totalComparisons: analytics.totalComparisons,
+        recentComparisons: formattedRecentComparisons,
+        topParameters,
+        carDistribution: formattedCarDistribution,
+        trackDistribution: formattedTrackDistribution,
+        temporalData: sortedTemporalData,
+        uniqueSetups: analytics.setupNamesUsed.size,
+        parameterFrequency: analytics.parameterFrequency,
+      });
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
   app.get('/api/comparisons/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

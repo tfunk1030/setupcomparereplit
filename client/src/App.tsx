@@ -10,6 +10,7 @@ import Dashboard from "@/pages/dashboard";
 import Compare from "@/pages/compare";
 import ComparisonView from "@/pages/comparison-view";
 import ShareView from "@/pages/share-view";
+import Analytics from "@/pages/analytics";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -18,11 +19,16 @@ function Router() {
   return (
     <Switch>
       {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <>
+          <Route path="/" component={Landing} />
+          <Route path="/dashboard" component={Landing} />
+        </>
       ) : (
         <>
           <Route path="/" component={Dashboard} />
+          <Route path="/dashboard" component={Dashboard} />
           <Route path="/compare" component={Compare} />
+          <Route path="/analytics" component={Analytics} />
           <Route path="/comparison/:id" component={ComparisonView} />
         </>
       )}
