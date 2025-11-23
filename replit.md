@@ -41,7 +41,13 @@ Preferred communication style: Simple, everyday language.
 - `/api/comparisons/:id` - Individual comparison access
 - `/share/:token` - Public sharing functionality
 
-**File Processing**: Multer middleware handles multipart form uploads, storing files in memory as buffers. The setup parser processes iRacing setup file format (INI-style with sections and key-value pairs), normalizing parameter names and organizing data hierarchically.
+**File Processing**: Multer middleware handles multipart form uploads, storing files in memory as buffers. The application supports two file formats for iRacing setups:
+
+1. **HTML Export Format (Recommended)**: iRacing's official HTML export format, generated via the EXPORT button in the Garage. Parsed using Cheerio to extract setup parameters from HTML tables organized by section (Tires, Suspension, Dampers, Aero, ARB, Brakes, Diff). The parser handles multiple table structures including 2-column (key-value pairs), 3-column (left/right values), and 4-column (position-based values) formats.
+
+2. **Binary .sto Format (Legacy Support)**: iRacing's native binary setup file format. Parser handles INI-style sections and key-value pairs, normalizing parameter names and organizing data hierarchically. Note: .sto files use ZLIB compression and a proprietary undocumented structure.
+
+File type detection occurs automatically via file extension (.html/.htm vs .sto) or content analysis (checking for HTML markers like <!DOCTYPE, <table>, <h2>). Both formats normalize to a consistent ParsedSetup structure for comparison.
 
 **Comparison Engine**: 
 - Calculates deltas between corresponding parameters in two setups
@@ -109,6 +115,8 @@ Preferred communication style: Simple, everyday language.
 ### File Processing
 
 **Multer**: Multipart form data handling for file uploads, configured with memory storage.
+
+**Cheerio**: Fast, flexible HTML parsing library used to extract setup parameters from iRacing HTML exports. Provides jQuery-like syntax for DOM traversal and manipulation.
 
 **Date-fns**: Date formatting and manipulation, used for displaying comparison timestamps.
 
