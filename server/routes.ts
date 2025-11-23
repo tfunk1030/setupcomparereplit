@@ -45,11 +45,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const setupAContent = setupAFile.buffer.toString('utf-8');
       const setupBContent = setupBFile.buffer.toString('utf-8');
 
+      console.log('[Upload] Parsing setup A:', setupAFile.originalname);
       const setupAData = parseIRacingSetup(setupAContent);
+      console.log('[Upload] Setup A sections:', Object.keys(setupAData));
+      
+      console.log('[Upload] Parsing setup B:', setupBFile.originalname);
       const setupBData = parseIRacingSetup(setupBContent);
+      console.log('[Upload] Setup B sections:', Object.keys(setupBData));
 
+      console.log('[Upload] Calculating deltas...');
       const deltaData = calculateDeltas(setupAData, setupBData);
+      console.log('[Upload] Delta sections:', Object.keys(deltaData));
+      
       const interpretations = generateInterpretations(deltaData, carName, trackName);
+      console.log('[Upload] Generated interpretations:', interpretations.length);
 
       // Parse telemetry data if provided
       let telemetryData: TelemetryData | null = null;
