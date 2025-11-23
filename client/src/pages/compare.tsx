@@ -59,7 +59,7 @@ export default function Compare() {
   const compareMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       const result = await apiRequest("POST", "/api/comparisons/upload", formData);
-      return result;
+      return result.json();
     },
     onSuccess: (data: any) => {
       toast({
@@ -304,7 +304,7 @@ export default function Compare() {
                         const file = e.target.files?.[0];
                         if (file) handleFileSelect(file, true);
                       }}
-                      data-testid="input-file-a"
+                      data-testid="input-file-setup-a"
                     />
                     <Button variant="secondary" size="sm" asChild>
                       <label htmlFor="file-a" className="cursor-pointer">
@@ -376,7 +376,7 @@ export default function Compare() {
                         const file = e.target.files?.[0];
                         if (file) handleFileSelect(file, false);
                       }}
-                      data-testid="input-file-b"
+                      data-testid="input-file-setup-b"
                     />
                     <Button variant="secondary" size="sm" asChild>
                       <label htmlFor="file-b" className="cursor-pointer">

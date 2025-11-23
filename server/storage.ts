@@ -7,7 +7,7 @@ import {
   type InsertComparison,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -63,7 +63,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(comparisons)
       .where(eq(comparisons.userId, userId))
-      .orderBy(comparisons.createdAt);
+      .orderBy(desc(comparisons.createdAt));
   }
 
   async updateComparisonPublic(
