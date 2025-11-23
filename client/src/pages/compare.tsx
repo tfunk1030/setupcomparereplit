@@ -8,10 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Files, Upload, X, CheckCircle2, AlertCircle, ArrowLeft, LogOut } from "lucide-react";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Files, Upload, X, CheckCircle2, AlertCircle, ArrowLeft, LogOut, ChevronsUpDown } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { commonCars, commonTracks } from "@/lib/racingData";
 
 interface FileState {
   file: File | null;
@@ -399,23 +401,81 @@ export default function Compare() {
           <CardContent className="grid md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="car-name" className="mb-2 block">Car Name</Label>
-              <Input
-                id="car-name"
-                placeholder="e.g., BMW M4 GT3"
-                value={carName}
-                onChange={(e) => setCarName(e.target.value)}
-                data-testid="input-car-name"
-              />
+              <div className="relative">
+                <Input
+                  id="car-name"
+                  list="car-suggestions"
+                  placeholder="e.g., BMW M4 GT3 or type your own"
+                  value={carName}
+                  onChange={(e) => setCarName(e.target.value)}
+                  data-testid="input-car-name"
+                />
+                <datalist id="car-suggestions">
+                  <option disabled>── GT3 Cars ──</option>
+                  {commonCars.filter(car => car.class === "GT3").map((car) => (
+                    <option key={car.value} value={car.value}>{car.label}</option>
+                  ))}
+                  <option disabled>── Formula Cars ──</option>
+                  {commonCars.filter(car => car.class === "Formula").map((car) => (
+                    <option key={car.value} value={car.value}>{car.label}</option>
+                  ))}
+                  <option disabled>── NASCAR ──</option>
+                  {commonCars.filter(car => car.class === "NASCAR").map((car) => (
+                    <option key={car.value} value={car.value}>{car.label}</option>
+                  ))}
+                  <option disabled>── LMP/GTP ──</option>
+                  {commonCars.filter(car => car.class === "LMP").map((car) => (
+                    <option key={car.value} value={car.value}>{car.label}</option>
+                  ))}
+                  <option disabled>── Touring Cars ──</option>
+                  {commonCars.filter(car => car.class === "Touring").map((car) => (
+                    <option key={car.value} value={car.value}>{car.label}</option>
+                  ))}
+                  <option disabled>── MX-5 ──</option>
+                  {commonCars.filter(car => car.class === "MX-5").map((car) => (
+                    <option key={car.value} value={car.value}>{car.label}</option>
+                  ))}
+                </datalist>
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Select from list or type custom car</p>
             </div>
             <div>
               <Label htmlFor="track-name" className="mb-2 block">Track Name</Label>
-              <Input
-                id="track-name"
-                placeholder="e.g., Spa-Francorchamps"
-                value={trackName}
-                onChange={(e) => setTrackName(e.target.value)}
-                data-testid="input-track-name"
-              />
+              <div className="relative">
+                <Input
+                  id="track-name"
+                  list="track-suggestions"
+                  placeholder="e.g., Spa-Francorchamps or type your own"
+                  value={trackName}
+                  onChange={(e) => setTrackName(e.target.value)}
+                  data-testid="input-track-name"
+                />
+                <datalist id="track-suggestions">
+                  <option disabled>── Road Courses ──</option>
+                  {commonTracks.filter(track => track.type === "Road").map((track) => (
+                    <option key={track.value} value={track.value}>{track.label}</option>
+                  ))}
+                  <option disabled>── Ovals ──</option>
+                  {commonTracks.filter(track => track.type === "Oval").map((track) => (
+                    <option key={track.value} value={track.value}>{track.label}</option>
+                  ))}
+                  <option disabled>── Street Circuits ──</option>
+                  {commonTracks.filter(track => track.type === "Street").map((track) => (
+                    <option key={track.value} value={track.value}>{track.label}</option>
+                  ))}
+                  <option disabled>── Rovals ──</option>
+                  {commonTracks.filter(track => track.type === "Roval").map((track) => (
+                    <option key={track.value} value={track.value}>{track.label}</option>
+                  ))}
+                </datalist>
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Select from list or type custom track</p>
             </div>
           </CardContent>
         </Card>

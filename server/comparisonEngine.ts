@@ -110,7 +110,9 @@ function calculateMagnitude(delta: number, percentChange: number, unit?: string)
 }
 
 export function generateInterpretations(
-  deltas: Record<string, Record<string, ParameterDelta>>
+  deltas: Record<string, Record<string, ParameterDelta>>,
+  carClass?: string,
+  track?: string
 ): Interpretation[] {
   const interpretations: Interpretation[] = [];
   
@@ -118,7 +120,7 @@ export function generateInterpretations(
     for (const [paramName, delta] of Object.entries(params)) {
       if (delta.magnitude === 'none' || delta.magnitude === 'minor') continue;
       
-      const interpretation = interpretParameter(section, paramName, delta);
+      const interpretation = interpretParameter(section, paramName, delta, carClass, track);
       if (interpretation) {
         interpretations.push(interpretation);
       }
@@ -131,31 +133,97 @@ export function generateInterpretations(
 function interpretParameter(
   section: string,
   paramName: string,
-  delta: ParameterDelta
+  delta: ParameterDelta,
+  carClass?: string,
+  track?: string
 ): Interpretation | null {
   const paramLower = paramName.toLowerCase();
   const deltaNum = typeof delta.delta === 'number' ? delta.delta : 0;
   const isIncrease = deltaNum > 0;
   
+  // Determine track characteristics
+  const isOval = track?.toLowerCase().includes('oval') || 
+                 track?.toLowerCase().includes('speedway') ||
+                 track?.toLowerCase().includes('motor speedway') ||
+                 track?.toLowerCase().includes('superspeedway');
+  
+  const isStreetCircuit = track?.toLowerCase().includes('street') ||
+                          track?.toLowerCase().includes('monaco') ||
+                          track?.toLowerCase().includes('detroit') ||
+                          track?.toLowerCase().includes('long beach');
+  
+  const isHighSpeed = track?.toLowerCase().includes('monza') ||
+                      track?.toLowerCase().includes('spa') ||
+                      track?.toLowerCase().includes('silverstone') ||
+                      isOval;
+  
+  // Determine car characteristics
+  const isFormula = carClass?.toLowerCase().includes('formula') ||
+                    carClass?.toLowerCase().includes('f1') ||
+                    carClass?.toLowerCase().includes('f2') ||
+                    carClass?.toLowerCase().includes('f3') ||
+                    carClass?.toLowerCase().includes('indycar');
+  
+  const isGT = carClass?.toLowerCase().includes('gt3') ||
+               carClass?.toLowerCase().includes('gte') ||
+               carClass?.toLowerCase().includes('gtd') ||
+               carClass?.toLowerCase().includes('gt4');
+  
+  const isStockCar = carClass?.toLowerCase().includes('nascar') ||
+                     carClass?.toLowerCase().includes('xfinity') ||
+                     carClass?.toLowerCase().includes('truck');
+  
   if (section === 'aero') {
     if (paramLower.includes('front') && (paramLower.includes('wing') || paramLower.includes('flap'))) {
+      let trackNote = '';
+      if (isOval) {
+        trackNote = ' On oval tracks, front downforce is crucial for stability through banking.';
+      } else if (isHighSpeed) {
+        trackNote = ' On high-speed tracks, this will significantly affect straight-line speed.';
+      } else if (isStreetCircuit) {
+        trackNote = ' On street circuits, front downforce helps with the many slow corners.';
+      }
+      
+      let carNote = '';
+      if (isFormula) {
+        carNote = ' Formula cars are highly sensitive to aerodynamic changes.';
+      } else if (isStockCar) {
+        carNote = ' Stock cars rely heavily on aerodynamic balance for close racing.';
+      }
+      
       return {
         parameter: paramName,
         category: 'Aerodynamics',
         icon: 'wind',
         summary: `Front downforce ${isIncrease ? 'increased' : 'decreased'}`,
-        explanation: `${isIncrease ? 'Increasing' : 'Decreasing'} front wing angle by ${Math.abs(deltaNum)}${delta.unit || ''} will ${isIncrease ? 'add more front downforce, improving front-end grip and potentially causing understeer' : 'reduce front downforce, making the car more prone to oversteer on turn-in'}.`,
+        explanation: `${isIncrease ? 'Increasing' : 'Decreasing'} front wing angle by ${Math.abs(deltaNum)}${delta.unit || ''} will ${isIncrease ? 'add more front downforce, improving front-end grip and potentially causing understeer' : 'reduce front downforce, making the car more prone to oversteer on turn-in'}.${trackNote}${carNote}`,
         impact: isIncrease ? 'neutral' : 'negative',
       };
     }
     
     if (paramLower.includes('rear') && (paramLower.includes('wing') || paramLower.includes('flap'))) {
+      let trackNote = '';
+      if (isOval) {
+        trackNote = ' Critical for oval stability - less wing needed on superspeedways, more on shorter ovals.';
+      } else if (isHighSpeed) {
+        trackNote = ' Balance drag vs downforce carefully for long straights.';
+      } else if (isStreetCircuit) {
+        trackNote = ' Higher rear wing helps with traction out of slow corners.';
+      }
+      
+      let carNote = '';
+      if (isFormula) {
+        carNote = ' DRS zones make rear wing setting even more critical.';
+      } else if (isGT) {
+        carNote = ' GT cars need rear stability for amateur drivers.';
+      }
+      
       return {
         parameter: paramName,
         category: 'Aerodynamics',
         icon: 'wind',
         summary: `Rear downforce ${isIncrease ? 'increased' : 'decreased'}`,
-        explanation: `${isIncrease ? 'Increasing' : 'Decreasing'} rear wing by ${Math.abs(deltaNum)}${delta.unit || ''} will ${isIncrease ? 'improve rear stability and traction, especially in high-speed corners, but may increase drag' : 'reduce drag and improve top speed, but may make the rear unstable in fast corners'}.`,
+        explanation: `${isIncrease ? 'Increasing' : 'Decreasing'} rear wing by ${Math.abs(deltaNum)}${delta.unit || ''} will ${isIncrease ? 'improve rear stability and traction, especially in high-speed corners, but may increase drag' : 'reduce drag and improve top speed, but may make the rear unstable in fast corners'}.${trackNote}${carNote}`,
         impact: isIncrease ? 'positive' : 'negative',
       };
     }

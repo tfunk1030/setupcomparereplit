@@ -46,7 +46,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const setupBData = parseIRacingSetup(setupBContent);
 
       const deltaData = calculateDeltas(setupAData, setupBData);
-      const interpretations = generateInterpretations(deltaData);
+      const interpretations = generateInterpretations(deltaData, carName, trackName);
 
       const comparison = await storage.createComparison({
         userId,
