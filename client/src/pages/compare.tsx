@@ -50,6 +50,10 @@ export default function Compare() {
   const [isDraggingA, setIsDraggingA] = useState(false);
   const [isDraggingB, setIsDraggingB] = useState(false);
   const [isDraggingTelemetry, setIsDraggingTelemetry] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  const [category, setCategory] = useState('');
+  const [conditions, setConditions] = useState('');
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -186,6 +190,9 @@ export default function Compare() {
     if (telemetryFile.file) formData.append('telemetry', telemetryFile.file);
     if (carName) formData.append('carName', carName);
     if (trackName) formData.append('trackName', trackName);
+    if (tags.length > 0) formData.append('tags', JSON.stringify(tags));
+    if (category) formData.append('category', category);
+    if (conditions) formData.append('conditions', conditions);
 
     compareMutation.mutate(formData);
   };
@@ -484,6 +491,106 @@ export default function Compare() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground mt-1">Select from list or type custom track</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Tags & Categorization (Optional)</CardTitle>
+            <CardDescription>Add tags and categorize this comparison for better organization</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="category" className="mb-2 block">Category</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger id="category" data-testid="select-category">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Session Type</SelectLabel>
+                    <SelectItem value="practice">Practice</SelectItem>
+                    <SelectItem value="qualifying">Qualifying</SelectItem>
+                    <SelectItem value="race">Race</SelectItem>
+                    <SelectItem value="endurance">Endurance</SelectItem>
+                    <SelectItem value="time-trial">Time Trial</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="conditions" className="mb-2 block">Track Conditions</Label>
+              <Select value={conditions} onValueChange={setConditions}>
+                <SelectTrigger id="conditions" data-testid="select-conditions">
+                  <SelectValue placeholder="Select conditions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Weather Conditions</SelectLabel>
+                    <SelectItem value="dry">Dry</SelectItem>
+                    <SelectItem value="wet">Wet</SelectItem>
+                    <SelectItem value="damp">Damp</SelectItem>
+                    <SelectItem value="mixed">Mixed</SelectItem>
+                    <SelectItem value="variable">Variable</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="tags" className="mb-2 block">Tags</Label>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    id="tags"
+                    placeholder="Add a tag (e.g., 'stable', 'fast', 'fuel-save')"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && tagInput.trim()) {
+                        e.preventDefault();
+                        if (!tags.includes(tagInput.trim())) {
+                          setTags([...tags, tagInput.trim()]);
+                          setTagInput('');
+                        }
+                      }
+                    }}
+                    data-testid="input-tag"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+                        setTags([...tags, tagInput.trim()]);
+                        setTagInput('');
+                      }
+                    }}
+                    data-testid="button-add-tag"
+                  >
+                    Add
+                  </Button>
+                </div>
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary" className="gap-1">
+                        {tag}
+                        <button
+                          onClick={() => setTags(tags.filter((_, i) => i !== index))}
+                          className="ml-1 hover:text-destructive"
+                          data-testid={`button-remove-tag-${index}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">Press Enter or click Add to add tags</p>
+              </div>
             </div>
           </CardContent>
         </Card>

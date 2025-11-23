@@ -9,8 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Comparison } from "@shared/schema";
-import { Files, Plus, Search, LogOut, Eye, Share2, Trash2, Calendar, BarChart3 } from "lucide-react";
+import { Files, Plus, Search, LogOut, Eye, Share2, Trash2, Calendar, BarChart3, Filter, X } from "lucide-react";
 import { Link } from "wouter";
 import { format } from "date-fns";
 
@@ -18,6 +19,9 @@ export default function Dashboard() {
   const { toast } = useToast();
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedConditions, setSelectedConditions] = useState<string>("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -39,14 +43,36 @@ export default function Dashboard() {
   });
 
   const filteredComparisons = comparisons?.filter((comp) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      comp.setupAName.toLowerCase().includes(query) ||
-      comp.setupBName.toLowerCase().includes(query) ||
-      comp.carName?.toLowerCase().includes(query) ||
-      comp.trackName?.toLowerCase().includes(query)
-    );
+    // Search query filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = 
+        comp.setupAName.toLowerCase().includes(query) ||
+        comp.setupBName.toLowerCase().includes(query) ||
+        comp.carName?.toLowerCase().includes(query) ||
+        comp.trackName?.toLowerCase().includes(query) ||
+        (comp as any).tags?.some((tag: string) => tag.toLowerCase().includes(query));
+      if (!matchesSearch) return false;
+    }
+    
+    // Category filter
+    if (selectedCategory && selectedCategory !== "all" && (comp as any).category !== selectedCategory) {
+      return false;
+    }
+    
+    // Conditions filter
+    if (selectedConditions && selectedConditions !== "all" && (comp as any).conditions !== selectedConditions) {
+      return false;
+    }
+    
+    // Tags filter
+    if (selectedTags.length > 0) {
+      const compTags = (comp as any).tags || [];
+      const hasAllTags = selectedTags.every(tag => compTags.includes(tag));
+      if (!hasAllTags) return false;
+    }
+    
+    return true;
   });
 
   const totalComparisons = comparisons?.length || 0;
@@ -184,6 +210,104 @@ export default function Dashboard() {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger data-testid="select-filter-category">
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              <SelectGroup>
+                <SelectLabel>Session Type</SelectLabel>
+                <SelectItem value="practice">Practice</SelectItem>
+                <SelectItem value="qualifying">Qualifying</SelectItem>
+                <SelectItem value="race">Race</SelectItem>
+                <SelectItem value="endurance">Endurance</SelectItem>
+                <SelectItem value="time-trial">Time Trial</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedConditions} onValueChange={setSelectedConditions}>
+            <SelectTrigger data-testid="select-filter-conditions">
+              <SelectValue placeholder="All Conditions" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Conditions</SelectItem>
+              <SelectGroup>
+                <SelectLabel>Weather Conditions</SelectLabel>
+                <SelectItem value="dry">Dry</SelectItem>
+                <SelectItem value="wet">Wet</SelectItem>
+                <SelectItem value="damp">Damp</SelectItem>
+                <SelectItem value="mixed">Mixed</SelectItem>
+                <SelectItem value="variable">Variable</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center gap-2">
+            {(selectedCategory && selectedCategory !== "all") || 
+             (selectedConditions && selectedConditions !== "all") || 
+             selectedTags.length > 0 ? (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  setSelectedCategory("");
+                  setSelectedConditions("");
+                  setSelectedTags([]);
+                }}
+                data-testid="button-clear-filters"
+              >
+                <X className="h-4 w-4 mr-1" />
+                Clear Filters
+              </Button>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Tags filter section */}
+        {comparisons && comparisons.length > 0 && (() => {
+          // Extract all unique tags from comparisons
+          const allTags = new Set<string>();
+          comparisons.forEach(comp => {
+            const tags = (comp as any).tags || [];
+            tags.forEach((tag: string) => allTags.add(tag));
+          });
+          const availableTags = Array.from(allTags).sort();
+
+          if (availableTags.length > 0) {
+            return (
+              <div className="mb-6">
+                <div className="flex flex-wrap gap-2 items-center">
+                  <span className="text-sm font-medium">Filter by tags:</span>
+                  {availableTags.map(tag => (
+                    <Badge
+                      key={tag}
+                      variant={selectedTags.includes(tag) ? "default" : "secondary"}
+                      className="cursor-pointer"
+                      onClick={() => {
+                        if (selectedTags.includes(tag)) {
+                          setSelectedTags(selectedTags.filter(t => t !== tag));
+                        } else {
+                          setSelectedTags([...selectedTags, tag]);
+                        }
+                      }}
+                      data-testid={`badge-tag-filter-${tag}`}
+                    >
+                      {tag}
+                      {selectedTags.includes(tag) && (
+                        <X className="h-3 w-3 ml-1" />
+                      )}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()}
+
         <div className="space-y-4">
           {comparisonsLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
@@ -227,6 +351,25 @@ export default function Dashboard() {
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Calendar className="h-3 w-3" />
                           {comparison.createdAt && format(new Date(comparison.createdAt), 'PPp')}
+                        </div>
+                        
+                        {/* Tags, Category, and Conditions display */}
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {(comparison as any).category && (
+                            <Badge variant="outline" className="text-xs">
+                              {(comparison as any).category}
+                            </Badge>
+                          )}
+                          {(comparison as any).conditions && (
+                            <Badge variant="outline" className="text-xs">
+                              {(comparison as any).conditions}
+                            </Badge>
+                          )}
+                          {(comparison as any).tags?.map((tag: string) => (
+                            <Badge key={tag} variant="secondary" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
                         </div>
                       </CardDescription>
                     </div>

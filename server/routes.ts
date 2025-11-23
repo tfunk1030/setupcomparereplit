@@ -32,7 +32,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-      const { carName, trackName } = req.body;
+      const { carName, trackName, tags, category, conditions } = req.body;
 
       if (!files?.setupA?.[0] || !files?.setupB?.[0]) {
         return res.status(400).json({ message: "Both setup files are required" });
@@ -63,6 +63,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Parse tags if provided
+      let parsedTags: string[] = [];
+      if (tags) {
+        try {
+          parsedTags = JSON.parse(tags);
+        } catch (e) {
+          // If parsing fails, treat as a single tag
+          parsedTags = [tags];
+        }
+      }
+
       const comparison = await storage.createComparison({
         userId,
         setupAName: setupAFile.originalname.replace('.sto', ''),
@@ -74,6 +85,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         telemetryData: telemetryData as any,
         carName: carName || null,
         trackName: trackName || null,
+        tags: parsedTags,
+        category: category || null,
+        conditions: conditions || null,
         isPublic: false,
         shareToken: null,
       });

@@ -363,6 +363,22 @@ export default function ComparisonView() {
                     <span data-testid="text-track-name">{comparison.trackName}</span>
                   </div>
                 )}
+                {(comparison as any).category && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Category:</span>
+                    <Badge variant="outline" className="text-xs">
+                      {(comparison as any).category}
+                    </Badge>
+                  </div>
+                )}
+                {(comparison as any).conditions && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Conditions:</span>
+                    <Badge variant="outline" className="text-xs">
+                      {(comparison as any).conditions}
+                    </Badge>
+                  </div>
+                )}
                 {comparison.createdAt && (
                   <div className="flex items-center gap-2">
                     <Calendar className="h-3 w-3" />
@@ -370,6 +386,15 @@ export default function ComparisonView() {
                   </div>
                 )}
               </div>
+              {(comparison as any).tags && (comparison as any).tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {(comparison as any).tags.map((tag: string, index: number) => (
+                    <Badge key={index} variant="secondary" data-testid={`tag-${index}`}>
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="flex gap-2">
               <DropdownMenu>

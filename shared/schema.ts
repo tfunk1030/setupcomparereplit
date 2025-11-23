@@ -50,6 +50,9 @@ export const comparisons = pgTable("comparisons", {
   carName: text("car_name"),
   trackName: text("track_name"),
   telemetryData: jsonb("telemetry_data"),
+  tags: text("tags").array().default(sql`ARRAY[]::text[]`),
+  category: text("category"), // e.g., "qualifying", "race", "endurance"
+  conditions: text("conditions"), // e.g., "dry", "wet", "mixed"
   isPublic: boolean("is_public").default(false),
   shareToken: varchar("share_token").unique(),
   createdAt: timestamp("created_at").defaultNow(),
