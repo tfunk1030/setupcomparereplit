@@ -11,9 +11,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import type { Comparison, ParameterDelta, Interpretation } from "@shared/schema";
-import { Files, ArrowLeft, LogOut, Share2, Download, TrendingUp, TrendingDown, Minus, Lightbulb, AlertCircle, CheckCircle2, Calendar } from "lucide-react";
+import { Files, ArrowLeft, LogOut, Share2, Download, TrendingUp, TrendingDown, Minus, Lightbulb, AlertCircle, CheckCircle2, Calendar, FileText, FileSpreadsheet } from "lucide-react";
 import { Link, useRoute } from "wouter";
 import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -179,25 +185,29 @@ export default function ComparisonView() {
   });
 
   const exportMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch(`/api/comparisons/${comparisonId}/export`, {
+    mutationFn: async (format: 'csv' | 'pdf') => {
+      const endpoint = format === 'pdf' 
+        ? `/api/comparisons/${comparisonId}/export/pdf`
+        : `/api/comparisons/${comparisonId}/export`;
+      const response = await fetch(endpoint, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Export failed');
-      return response.blob();
+      return { blob: await response.blob(), format };
     },
-    onSuccess: (blob) => {
+    onSuccess: ({ blob, format }) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `comparison-${comparison?.setupAName}-vs-${comparison?.setupBName}.csv`;
+      const extension = format === 'pdf' ? 'pdf' : 'csv';
+      a.download = `comparison-${comparison?.setupAName}-vs-${comparison?.setupBName}.${extension}`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast({
         title: "Export successful",
-        description: "CSV file has been downloaded",
+        description: `${format.toUpperCase()} file has been downloaded`,
       });
     },
     onError: () => {
@@ -361,15 +371,28 @@ export default function ComparisonView() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => exportMutation.mutate()}
-                disabled={exportMutation.isPending}
-                data-testid="button-export"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export CSV
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    disabled={exportMutation.isPending}
+                    data-testid="button-export"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => exportMutation.mutate('csv')}>
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    Export as CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportMutation.mutate('pdf')}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    Export as PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 

@@ -1,0 +1,56 @@
+Build into our existing web application SetupComparer (React + TypeScript front-end, Node.js + Express back-end, SQLite for storage) a comprehensive Setup Effect Analysis feature with these requirements:
+
+1. Setup Import & Comparison Workflow
+
+Allow the user to upload two setup files exported from iRacing (text format, key=value lines) via a new UI screen “New Comparison”.
+
+On backend receive the two files, parse each using a module SetupParser into JSON objects with fields: carModel, track, and a map of parameterName → value (numeric or string).
+
+Create a comparison engine ComparisonEngine that computes for each numeric parameter: oldValue, newValue, delta = newValue – oldValue, and determine a severity level: minor, moderate, or major, based on configurable thresholds.
+
+Store in DB tables: setups (id, userId, carModel, track, parameterJson, createdAt), comparisons (id, userId, setupA_id, setupB_id, deltaJson, createdAt).
+
+2. Rule-Engine Explanation Module
+
+Build a module RuleEngine (or InterpretationEngine) that for each parameter with a non-zero delta uses a rule database (e.g., JSON or SQLite table) mapping parameter → effect template → context tags (carModel, trackCategory).
+
+Example rule: “front ride height ↑ mm → front down-force ↓ → expect earlier under-steer in high-speed corners”.
+
+Generate per-parameter explanation: include parameter name, old value, new value, delta, severity, and human-friendly effect description.
+
+3. Combined Summary & Interaction Logic
+
+Build logic that analyses all changes collectively and:
+• Determines overall effect on car behaviour (e.g., more under-steer, less agility, better stability).
+• Identifies interactions or offsets (for example: front wing ↑ + front ride height ↑ → extra wing effect partially offset by higher ride height).
+• Provides a “balance check” (does car shift toward under-steer or over-steer).
+• Offers recommendations or focus areas (e.g., “Monitor rear outer-edge tyre wear due to more negative rear camber” or “Check straight-line speed because wing has increased”).
+
+4. UI Integration
+
+In the Comparison View screen, below the side-by-side parameter table (old/new/delta/flag), add a section titled “What This Means On Track”.
+• Show each parameter change row clickable/hoverable to reveal the explanation.
+• Show a toggle to switch between “Short Hint” and “Full Explanation”.
+• Below that, show the Combined Summary section with overall effect, interactions/offsets, balance check, and recommendations.
+
+5. API & Backend Integration
+
+Define API endpoint: POST /api/analyseSetupEffects which receives setupA_id, setupB_id (or the JSON objects) and returns: per-parameter analysis list + combined summary.
+
+Front-end calls this endpoint after parsing and comparison.
+
+6. Testing & Documentation
+
+Write unit tests for the ComparisonEngine, RuleEngine, and summary logic covering at least 15 scenarios including parameter only changes, offsetting changes, multiple simultaneous changes.
+
+Update project README: include description of the new feature, configurable thresholds for severity, instructions for maintaining the rule database, how to add new parameter rules.
+
+7. Maintainability & Future-Proofing
+
+Store rule data in a format (JSON or database) so new cars/tracks can be added without code changes.
+
+Ensure modules handle missing parameters gracefully (e.g., parameter present in one setup but not the other).
+
+Architecture should allow future extension: telemetry upload (.ibt), car/track-specific rules, advanced analytics.
+
+Please scaffold the feature end-to-end: file structure, back-end modules, front-end UI components, database migrations, example rule-mapping dataset (20+ rules), and integrate so that uploading two setups triggers the full analysis and displays results as described.”

@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { parseIRacingSetup } from "./setupParser";
 import { calculateDeltas, generateInterpretations } from "./comparisonEngine";
+import { generateComparisonPDF } from "./pdfGenerator";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -172,6 +173,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error exporting comparison:", error);
       res.status(500).json({ message: "Failed to export comparison" });
+    }
+  });
+
+  app.get('/api/comparisons/:id/export/pdf', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+
+      const comparison = await storage.getComparison(id);
+      
+      if (!comparison) {
+        return res.status(404).json({ message: "Comparison not found" });
+      }
+
+      if (comparison.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const pdfBuffer = await generateComparisonPDF(comparison);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="comparison-${comparison.setupAName}-vs-${comparison.setupBName}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      res.status(500).json({ message: "Failed to generate PDF" });
     }
   });
 
