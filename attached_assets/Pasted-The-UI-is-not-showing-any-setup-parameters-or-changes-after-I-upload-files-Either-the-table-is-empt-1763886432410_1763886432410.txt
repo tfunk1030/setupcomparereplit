@@ -1,0 +1,119 @@
+The UI is not showing any setup parameters or changes after I upload files. Either the table is empty, or it shows “no data” / a blank state. I need you to trace this end-to-end and fix it.
+
+What I want you to do
+
+Trace the full flow end-to-end
+
+Start from the file upload component on the front end.
+
+Follow how the files are sent to the backend (which endpoint, which payload).
+
+Check the backend upload handler: confirm it calls the parser, stores data, and/or calls the comparison logic.
+
+Check how the comparison data is sent back to the frontend (API response shape).
+
+Check the React components that should render:
+
+Parsed setup parameters
+
+Comparison rows (old value, new value, delta, severity)
+
+Identify where in this chain the data becomes empty, undefined, or mismatched.
+
+Verify the parser and comparison logic
+
+Open the SetupParser module and confirm:
+
+It actually reads the uploaded file contents.
+
+It correctly parses iRacing key=value lines into a JSON object (parameterName → value).
+
+It returns this JSON to the caller or writes it to the DB correctly.
+
+Open the ComparisonEngine:
+
+Confirm it receives two valid setup JSON objects, not null/undefined / empty.
+
+Ensure it loops over parameters, computes deltas, and returns an array like:
+{ parameter: string, oldValue: number | string, newValue: number | string, delta: number, severity: 'minor' | 'moderate' | 'major' }.
+
+If it’s using keys from one setup only, confirm both setups share a consistent key format.
+
+Check API contracts and response shapes
+
+Inspect the backend endpoints used after upload, for example:
+
+POST /api/uploadSetup
+
+POST /api/compareSetups or /api/analyseSetupEffects
+
+For each endpoint:
+
+Confirm the response JSON actually contains the comparison data (log it on the server).
+
+Make sure the property names in the JSON exactly match what the frontend expects (e.g. comparisonResults vs data vs rows).
+
+If the response is wrapped (e.g. { success, data: { comparisons: [...] } }), adjust the frontend to use the correct nested path.
+
+Fix the React rendering logic
+
+Inspect the main comparison screen component (whatever it’s called, e.g. ComparisonView, ComparisonResults, etc.).
+
+Make sure it:
+
+Calls the correct API endpoint after both uploads complete.
+
+Uses useEffect / handlers to set state when the API succeeds.
+
+Stores the array of comparison rows in state, e.g. const [rows, setRows] = useState<ComparisonRow[]>([]).
+
+Renders a table/map over that array:
+rows.map(row => <tr>...</tr>)
+
+Fix common issues like:
+
+Mapping over undefined
+
+Using the wrong prop name
+
+Conditional rendering that always takes the “empty” path because the check is wrong (e.g. if (!rows) instead of if (!rows.length)).
+
+Add logging and temporary debug UI
+
+Add console logs or simple debug text at key points:
+
+After parsing each setup file: log the parsed JSON.
+
+After computing comparison: log the comparison array length and a few sample objects.
+
+In the React component: log the data received from the API and the final state that’s being rendered.
+
+Remove excessive logging once the bug is fixed.
+
+Make the fix robust
+
+Handle error cases: if parsing fails or setup files are empty, show a clear message in the UI instead of silently failing.
+
+Ensure that even if some parameters are missing, the ones that exist still render.
+
+Write at least one unit test or integration test that:
+
+Feeds two known test setup files into the parser + comparison logic.
+
+Asserts that the comparison array has the expected number of changed parameters and specific deltas.
+
+Summarize your changes
+
+After implementing the fix, list:
+
+What the root cause was (e.g., mismatch between API response keys and front-end expectations, parser returning empty object, etc.).
+
+Which files you changed.
+
+How I can quickly verify the fix (step-by-step).
+
+Do not just say “looks fine”. I want you to actively debug, modify code where needed, and ensure that after two setup files are uploaded, the comparison screen always shows:
+
+A table of setup parameters with old value, new value, delta, severity
+
+Or a clear, explicit error if something genuinely failed.
