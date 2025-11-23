@@ -1,0 +1,63 @@
+Please review the current version of the web application SetupComparer and evaluate whether all major requirements have been implemented and whether there are any gaps or improvement points. Provide a detailed checklist with status (✅/⚠️/❌) for each item, followed by commentary for any items flagged as ⚠️ or ❌. Use a structure grouped by: Functional Features, Data & Backend, User Interface & UX, Domain Logic/Interpretation, Quality & Best Practices, Deployment & Operations.
+
+Functional Features
+
+✅ Users can upload two car-setup files (from the correct format) and the files are accepted by the system.
+
+✅ Setup parsing module correctly reads key-value pairs into structured JSON including car model, track, and all parameters.
+
+✅ Comparison engine computes deltas for all numeric parameters, categorises changes (minor/moderate/major) and returns result.
+
+✅ UI shows side-by-side old vs new values, shows delta, colour codes changes, allows filter by major changes.
+
+✅ Interpretation panel shows human-friendly explanation for each significant parameter change (based on rules).
+
+✅ Users have accounts: signup/login works, previous comparisons are listed in dashboard, each comparison can be viewed.
+
+✅ Export feature works: user can generate and download PDF or CSV report with setup snapshots, difference table, explanations.
+
+✅ Shareable link: a public URL (read-only) can be generated/viewed for a comparison without requiring login.
+
+⚠️ (if implemented) Telemetry upload: user can upload .ibt file, parser extracts relevant metrics, UI shows graphs and correlated commentary.
+
+⚠️ (if implemented) Support for multiple car types & track categories: user selects car/track and interpretation engine uses context-aware rules.
+
+Data & Backend
+11. ✅ Database schema is defined and implemented (tables for setups, comparisons, telemetry, users, etc).
+12. ✅ Back-end API endpoints exist and are working: e.g., /uploadSetup, /compareSetups, /getComparisons, /exportReport, /share/:token.
+13. ✅ Parsing and comparison logic is adequately tested (unit tests exist for main modules).
+14. ✅ Interpretation rules are stored in a configurable form (e.g., JSON or database) rather than hard-coded in UI.
+15. ✅ Version control and branch strategy applied; project structure is logical and modular.
+
+User Interface & UX
+16. ✅ Landing page with login/signup flows present.
+17. ✅ Dashboard view lists previous comparisons and actions (view/export/share/delete) work.
+18. ✅ Comparison view visually clear: side-by-side values, highlights, filter/sort/search by parameter.
+19. ✅ Interpretation panel clearly visible, with ability to click/hover a change to see explanation; toggle between short hint vs full explanation.
+20. ✅ UI styling consistent and responsive (works on desktop and tablet), uses modern framework (e.g., Tailwind or equivalent).
+
+Domain Logic / Interpretation Engine
+21. ✅ There are at least 20 mapping rules covering key parameters (camber, toe, ride height, wing, ARB etc), with human-friendly language.
+22. ✅ For each flagged change the system selects the correct rule and displays corresponding explanation.
+23. ⚠️ (if implemented) Interpretation engine takes into account car model and track category when selecting or adapting rules.
+24. ⚠️ (if implemented) Interpretation engine uses telemetry data correlation (e.g., tyre temps, lap times) to augment commentary.
+
+Quality & Best Practices
+25. ✅ Code is modular, adheres to DRY/YAGNI, consistent naming conventions. (See best practices references.) 
+2am.tech
++1
+
+26. ✅ Automated tests (unit, integration) exist and pass.
+27. ✅ CI/CD pipeline configured: build, test, deploy.
+28. ✅ Security considerations addressed: authentication secure, input validation, safe file uploads, session management.
+29. ✅ Performance and scalability considered: parsing large setup files works, UI remains responsive, database queries efficient.
+30. ✅ Documentation exists: README, API docs, developer onboarding instructions, user guide.
+
+Deployment & Operations
+31. ✅ Environment variables/configuration separated (development, staging, production).
+32. ✅ Build scripts and deployment instructions exist.
+33. ✅ Monitoring/logging set up for production (errors, performance).
+34. ✅ Rollback/backup plan documented.
+35. ✅ Share link and export features have been tested end-to-end and the UX is smooth.
+
+Please output the checklist with each item labelled (e.g., “Item 1. ✅ ”) and then for any item with ⚠️ or ❌ provide a short explanation of what is missing or what needs improvement. Also provide a top-level summary: how many items passed fully, how many flagged, and key focus areas for immediate next steps.”
