@@ -23,6 +23,7 @@ import { Files, ArrowLeft, LogOut, Share2, Download, TrendingUp, TrendingDown, M
 import { Link, useRoute } from "wouter";
 import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { TelemetryVisualization } from "@/components/telemetry-visualization";
 
 interface ParameterRowProps {
   label: string;
@@ -439,6 +440,11 @@ export default function ComparisonView() {
 
           <div className="lg:col-span-1">
             <div className="sticky top-20">
+              {comparison.telemetryData && (
+                <div className="mb-6">
+                  <TelemetryVisualization telemetryData={comparison.telemetryData} />
+                </div>
+              )}
               <h3 className="text-lg font-semibold mb-4">Interpretations</h3>
               {interpretations.length > 0 ? (
                 <div className="space-y-4">

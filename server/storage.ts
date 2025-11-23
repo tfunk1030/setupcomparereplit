@@ -42,7 +42,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async createComparison(comparisonData: InsertComparison): Promise<Comparison> {
+  async createComparison(comparisonData: InsertComparison & { telemetryData?: any }): Promise<Comparison> {
     const [comparison] = await db
       .insert(comparisons)
       .values(comparisonData)

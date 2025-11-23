@@ -6,6 +6,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { parseIRacingSetup } from "./setupParser";
 import { calculateDeltas, generateInterpretations } from "./comparisonEngine";
 import { generateComparisonPDF } from "./pdfGenerator";
+import { parseTelemetryCSV, type TelemetryData } from "./telemetryParser";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -25,7 +26,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/comparisons/upload', isAuthenticated, upload.fields([
     { name: 'setupA', maxCount: 1 },
-    { name: 'setupB', maxCount: 1 }
+    { name: 'setupB', maxCount: 1 },
+    { name: 'telemetry', maxCount: 1 }
   ]), async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -38,6 +40,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const setupAFile = files.setupA[0];
       const setupBFile = files.setupB[0];
+      const telemetryFile = files.telemetry?.[0];
 
       const setupAContent = setupAFile.buffer.toString('utf-8');
       const setupBContent = setupBFile.buffer.toString('utf-8');
@@ -48,6 +51,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const deltaData = calculateDeltas(setupAData, setupBData);
       const interpretations = generateInterpretations(deltaData, carName, trackName);
 
+      // Parse telemetry data if provided
+      let telemetryData: TelemetryData | null = null;
+      if (telemetryFile) {
+        try {
+          const telemetryContent = telemetryFile.buffer.toString('utf-8');
+          telemetryData = parseTelemetryCSV(telemetryContent);
+        } catch (error) {
+          console.error("Error parsing telemetry:", error);
+          // Continue without telemetry data if parsing fails
+        }
+      }
+
       const comparison = await storage.createComparison({
         userId,
         setupAName: setupAFile.originalname.replace('.sto', ''),
@@ -56,6 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         setupBData: setupBData as any,
         deltaData: deltaData as any,
         interpretations: interpretations as any,
+        telemetryData: telemetryData as any,
         carName: carName || null,
         trackName: trackName || null,
         isPublic: false,

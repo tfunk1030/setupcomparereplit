@@ -39,10 +39,17 @@ export default function Compare() {
     fileSize: '',
     status: 'idle',
   });
+  const [telemetryFile, setTelemetryFile] = useState<FileState>({
+    file: null,
+    fileName: '',
+    fileSize: '',
+    status: 'idle',
+  });
   const [carName, setCarName] = useState('');
   const [trackName, setTrackName] = useState('');
   const [isDraggingA, setIsDraggingA] = useState(false);
   const [isDraggingB, setIsDraggingB] = useState(false);
+  const [isDraggingTelemetry, setIsDraggingTelemetry] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -176,6 +183,7 @@ export default function Compare() {
     const formData = new FormData();
     formData.append('setupA', setupA.file);
     formData.append('setupB', setupB.file);
+    if (telemetryFile.file) formData.append('telemetry', telemetryFile.file);
     if (carName) formData.append('carName', carName);
     if (trackName) formData.append('trackName', trackName);
 
@@ -476,6 +484,139 @@ export default function Compare() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground mt-1">Select from list or type custom track</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Telemetry Data (Optional)</CardTitle>
+            <CardDescription>Upload lap time telemetry CSV to correlate with setup changes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div>
+              <Label className="mb-3 block text-sm font-medium">Telemetry CSV File</Label>
+              <div
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                  isDraggingTelemetry
+                    ? 'border-primary bg-primary/5'
+                    : telemetryFile.status === 'valid'
+                    ? 'border-chart-3 bg-chart-3/5'
+                    : telemetryFile.status === 'invalid'
+                    ? 'border-destructive bg-destructive/5'
+                    : 'border-border hover:border-primary/50'
+                }`}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDraggingTelemetry(false);
+                  const file = e.dataTransfer.files[0];
+                  if (file && file.name.endsWith('.csv')) {
+                    setTelemetryFile({
+                      file,
+                      fileName: file.name,
+                      fileSize: formatFileSize(file.size),
+                      status: 'valid',
+                    });
+                  } else {
+                    setTelemetryFile({
+                      file: null,
+                      fileName: file?.name || '',
+                      fileSize: formatFileSize(file?.size || 0),
+                      status: 'invalid',
+                    });
+                  }
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDraggingTelemetry(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDraggingTelemetry(false);
+                }}
+                data-testid="dropzone-telemetry"
+              >
+                {telemetryFile.file ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-center">
+                      {telemetryFile.status === 'valid' ? (
+                        <CheckCircle2 className="h-10 w-10 text-chart-3" />
+                      ) : (
+                        <AlertCircle className="h-10 w-10 text-destructive" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium font-mono text-sm mb-1" data-testid="text-filename-telemetry">
+                        {telemetryFile.fileName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{telemetryFile.fileSize}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setTelemetryFile({
+                        file: null,
+                        fileName: '',
+                        fileSize: '',
+                        status: 'idle',
+                      })}
+                      data-testid="button-clear-telemetry"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <Upload className="h-10 w-10 mx-auto text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">Drag and drop telemetry CSV here</p>
+                      <p className="text-sm text-muted-foreground mt-1">or</p>
+                    </div>
+                    <input
+                      type="file"
+                      accept=".csv"
+                      className="hidden"
+                      id="file-telemetry"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file && file.name.endsWith('.csv')) {
+                          setTelemetryFile({
+                            file,
+                            fileName: file.name,
+                            fileSize: formatFileSize(file.size),
+                            status: 'valid',
+                          });
+                        } else if (file) {
+                          setTelemetryFile({
+                            file: null,
+                            fileName: file.name,
+                            fileSize: formatFileSize(file.size),
+                            status: 'invalid',
+                          });
+                        }
+                      }}
+                      data-testid="input-file-telemetry"
+                    />
+                    <Button variant="secondary" size="sm" asChild>
+                      <label htmlFor="file-telemetry" className="cursor-pointer">
+                        Browse Files
+                      </label>
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <div className="mt-3">
+                <p className="text-xs text-muted-foreground">Expected CSV format: lap_number, lap_time (mm:ss.sss)</p>
+                <p className="text-xs text-muted-foreground">Optional columns: sector1, sector2, sector3, valid, fuel_level</p>
+              </div>
             </div>
           </CardContent>
         </Card>

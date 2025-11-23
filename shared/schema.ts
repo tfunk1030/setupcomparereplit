@@ -49,6 +49,7 @@ export const comparisons = pgTable("comparisons", {
   interpretations: jsonb("interpretations").notNull(),
   carName: text("car_name"),
   trackName: text("track_name"),
+  telemetryData: jsonb("telemetry_data"),
   isPublic: boolean("is_public").default(false),
   shareToken: varchar("share_token").unique(),
   createdAt: timestamp("created_at").defaultNow(),
