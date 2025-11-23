@@ -314,7 +314,7 @@ export default function Compare() {
                     <p className="text-sm text-muted-foreground mb-4">or click to browse</p>
                     <Input
                       type="file"
-                      accept=".sto"
+                      accept=".sto,.html,.htm"
                       className="hidden"
                       id="file-a"
                       onChange={(e) => {
@@ -329,7 +329,7 @@ export default function Compare() {
                       </label>
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">iRacing setup files (.sto)</p>
+                  <p className="text-xs text-muted-foreground">iRacing setup files (.sto or .html)</p>
                 </div>
               )}
             </div>
@@ -386,7 +386,7 @@ export default function Compare() {
                     <p className="text-sm text-muted-foreground mb-4">or click to browse</p>
                     <Input
                       type="file"
-                      accept=".sto"
+                      accept=".sto,.html,.htm"
                       className="hidden"
                       id="file-b"
                       onChange={(e) => {
@@ -401,7 +401,7 @@ export default function Compare() {
                       </label>
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">iRacing setup files (.sto)</p>
+                  <p className="text-xs text-muted-foreground">iRacing setup files (.sto or .html)</p>
                 </div>
               )}
             </div>

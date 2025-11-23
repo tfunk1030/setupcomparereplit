@@ -4,11 +4,27 @@ import multer from "multer";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { parseIRacingSetup } from "./setupParser";
+import { parseIRacingHTMLExport } from "./htmlSetupParser";
 import { calculateDeltas, generateInterpretations } from "./comparisonEngine";
 import { generateComparisonPDF } from "./pdfGenerator";
 import { parseTelemetryCSV, type TelemetryData } from "./telemetryParser";
 
 const upload = multer({ storage: multer.memoryStorage() });
+
+function isHTMLFile(filename: string, content: string): boolean {
+  // Check file extension
+  const hasHTMLExtension = filename.toLowerCase().endsWith('.html') || 
+                           filename.toLowerCase().endsWith('.htm');
+  
+  // Check content for HTML markers
+  const hasHTMLContent = content.trim().toLowerCase().startsWith('<!doctype') ||
+                        content.trim().toLowerCase().startsWith('<html') ||
+                        content.includes('<table') ||
+                        content.includes('<h1') ||
+                        content.includes('<h2');
+  
+  return hasHTMLExtension || hasHTMLContent;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
@@ -45,8 +61,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const setupAContent = setupAFile.buffer.toString('utf-8');
       const setupBContent = setupBFile.buffer.toString('utf-8');
 
-      const setupAData = parseIRacingSetup(setupAContent);
-      const setupBData = parseIRacingSetup(setupBContent);
+      // Detect file type and use appropriate parser
+      const isHTMLA = isHTMLFile(setupAFile.originalname, setupAContent);
+      const isHTMLB = isHTMLFile(setupBFile.originalname, setupBContent);
+
+      const setupAData = isHTMLA 
+        ? parseIRacingHTMLExport(setupAContent)
+        : parseIRacingSetup(setupAContent);
+      
+      const setupBData = isHTMLB
+        ? parseIRacingHTMLExport(setupBContent)
+        : parseIRacingSetup(setupBContent);
+      
       const deltaData = calculateDeltas(setupAData, setupBData);
       const interpretations = generateInterpretations(deltaData, carName, trackName);
 
