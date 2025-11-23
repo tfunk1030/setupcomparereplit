@@ -1,21 +1,11 @@
 import type { ParsedSetup, SetupParameter, SetupGroup } from "@shared/schema";
 
 export function parseIRacingSetup(fileContent: string): ParsedSetup {
-  console.log('[SetupParser] Starting parse, content length:', fileContent.length);
-  
-  // Log first 500 chars to see file structure
-  console.log('[SetupParser] First 500 chars:', fileContent.substring(0, 500));
-  
   const lines = fileContent.split('\n').map(line => line.trim());
-  console.log('[SetupParser] Total lines:', lines.length);
-  console.log('[SetupParser] First 10 lines:', lines.slice(0, 10));
-  
   const setup: ParsedSetup = {};
   
   let currentSection: string | null = null;
   let currentSubSection: string | null = null;
-  let sectionsFound = 0;
-  let parametersFound = 0;
   
   for (const line of lines) {
     if (!line || line.startsWith(';') || line.startsWith('#')) continue;
@@ -47,15 +37,10 @@ export function parseIRacingSetup(fileContent: string): ParsedSetup {
           if (!setup[currentSection]) {
             setup[currentSection] = {};
           }
-          console.log('[SetupParser] Inferred parent section:', currentSection, 'from subsection:', currentSubSection);
         }
-        
-        console.log('[SetupParser] Found subsection:', currentSubSection, 'under', currentSection);
       } else {
         currentSection = normalizeSectionName(sectionName);
         currentSubSection = null;
-        sectionsFound++;
-        console.log('[SetupParser] Found section:', sectionName, '-> normalized:', currentSection);
         
         if (!setup[currentSection]) {
           setup[currentSection] = {};
@@ -70,7 +55,6 @@ export function parseIRacingSetup(fileContent: string): ParsedSetup {
       
       const paramName = normalizeParameterName(key);
       const parsedValue = parseValue(value);
-      parametersFound++;
       
       if (currentSection) {
         if (currentSubSection) {
@@ -81,19 +65,9 @@ export function parseIRacingSetup(fileContent: string): ParsedSetup {
         } else {
           setup[currentSection]![paramName] = parsedValue;
         }
-      } else {
-        console.log('[SetupParser] WARNING: Found parameter without section:', key, '=', value);
       }
     }
   }
-  
-  const sectionCount = Object.keys(setup).length;
-  const totalParams = Object.values(setup).reduce((sum, section) => {
-    return sum + Object.keys(section).length;
-  }, 0);
-  console.log('[SetupParser] Parse complete. Sections found:', sectionsFound, 'Parameters found:', parametersFound);
-  console.log('[SetupParser] Final result - Sections:', sectionCount, 'Total params:', totalParams);
-  console.log('[SetupParser] Section names:', Object.keys(setup));
   
   return setup;
 }

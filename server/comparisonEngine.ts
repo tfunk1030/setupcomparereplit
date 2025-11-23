@@ -1,11 +1,8 @@
 import type { ParsedSetup, SetupParameter, ParameterDelta, Interpretation } from "@shared/schema";
 
 export function calculateDeltas(setupA: ParsedSetup, setupB: ParsedSetup): Record<string, Record<string, ParameterDelta>> {
-  console.log('[ComparisonEngine] Calculating deltas for sections A:', Object.keys(setupA).length, 'B:', Object.keys(setupB).length);
   const deltas: Record<string, Record<string, ParameterDelta>> = {};
-  
   const allSections = new Set([...Object.keys(setupA), ...Object.keys(setupB)]);
-  console.log('[ComparisonEngine] All sections to process:', Array.from(allSections));
   
   for (const section of allSections) {
     const sectionA = setupA[section] || {};

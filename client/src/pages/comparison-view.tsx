@@ -226,18 +226,12 @@ export default function ComparisonView() {
   };
 
   const renderParameterGroups = () => {
-    console.log('[ComparisonView] renderParameterGroups called');
-    console.log('[ComparisonView] comparison:', comparison);
-    console.log('[ComparisonView] deltaData:', comparison?.deltaData);
-    
     if (!comparison?.deltaData) {
-      console.log('[ComparisonView] No deltaData, returning null');
       return null;
     }
 
     const deltaData = comparison.deltaData as Record<string, any>;
     const groups = Object.keys(deltaData);
-    console.log('[ComparisonView] Groups found:', groups, 'Total:', groups.length);
 
     return (
       <Accordion type="multiple" defaultValue={groups} className="w-full">
